@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TuttiBox - Painel do Operador</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --sidebar-active: #2563eb;
+            --content-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --green-subtle: #f0fdf4;
+            --green-border: #bbf7d0;
+            --green-text: #166534;
+            --red-subtle: #fef2f2;
+            --red-border: #fecaca;
+            --red-text: #991b1b;
+            --amber-subtle: #fffbeb;
+            --amber-border: #fde68a;
+            --amber-text: #92400e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--content-bg);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* 1. Sidebar à Esquerda */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding-left: 8px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .brand-text h2 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-text span {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: var(--sidebar-hover);
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background-color: var(--sidebar-active);
+            color: #ffffff;
+        }
+
+        .operator-footer {
+            padding-top: 16px;
+            border-top: 1px solid #334155;
+            font-size: 12px;
+            color: #94a3b8;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* 2. Main Content */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 18px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .topbar-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .view-container {
+            padding: 32px;
+            flex-grow: 1;
+        }
+
+        /* 3. Estações: Grelha de Caixas */
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .station-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .station-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+            border-color: #3b82f6;
+        }
+
+        .station-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .station-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .station-address {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .station-stats {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stat-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .stat-badge.free {
+            background: var(--green-subtle);
+            color: var(--green-text);
+            border: 1px solid var(--green-border);
+        }
+
+        /* 4. Compartimentos: Grelha de Cacifos */
+        .lockers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .btn-back {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: #f1f5f9;
+        }
+
+        .lockers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .locker-card {
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s;
+        }
+
+        /* Background verde suave SEM encomenda (LIVRE), mesmo que abra ou feche */
+        .locker-card.free {
+            background-color: var(--green-subtle);
+            border-color: var(--green-border);
+        }
+
+        /* Background vermelho suave COM encomenda (OCUPADO / RESERVADO), mesmo que abra ou feche */
+        .locker-card.unavailable {
+            background-color: var(--red-subtle);
+            border-color: var(--red-border);
+        }
+
+        /* Background amarelo suave se avariado */
+        .locker-card.out-of-service {
+            background-color: var(--amber-subtle);
+            border-color: var(--amber-border);
+        }
+
+        .locker-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .locker-number {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .size-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .status-pill {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .door-sensor {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+        }
+
+        /* Quando a porta está FECHADA -> texto a VERMELHO */
+        .door-sensor.closed {
+            color: #dc2626; /* Vermelho */
+        }
+
+        /* Quando a porta está ABERTA -> texto a VERDE */
+        .door-sensor.open {
+            color: #16a34a; /* Verde */
+        }
+
+        .locker-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .btn-action {
+            padding: 7px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-action:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-action.toggle-fault {
+            grid-column: span 2;
+            color: #b45309;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Navbar do Lado Esquerdo -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">T</div>
+            <div class="brand-text">
+                <h2>TuttiBox</h2>
+                <span>Operador</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a class="nav-item active" onclick="showStationsView()">
+                <span>📍</span> Estações de Cacifos
+            </a>
+            <a class="nav-item" onclick="alert('Funcionalidade em desenvolvimento para a próxima fase.')">
+                <span>📦</span> Encomendas Ativas
+            </a>
+            <a class="nav-item" onclick="alert('Funcionalidade em desenvolvimento para a próxima fase.')">
+                <span>⚙️</span> Relatórios de Manutenção
+            </a>
+        </nav>
+
+        <div class="operator-footer">
+            <strong>Operador #119495</strong>
+            <span>Zona Aveiro (CP / UA / Fórum)</span>
+        </div>
+    </aside>
+
+    <!-- 2. Conteúdo Principal -->
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 id="view-title">Estações de Cacifos</h1>
+                <div class="topbar-subtitle" id="view-subtitle">Selecione uma estação para inspecionar os cacifos disponíveis.</div>
+            </div>
+        </header>
+
+        <section class="view-container">
+            <!-- VISTA 1: Grelha de Caixas das Estações -->
+            <div id="stations-view">
+                <div class="stations-grid" id="stations-grid">
+                    <!-- Gerado dinamicamente via JS -->
+                </div>
+            </div>
+
+            <!-- VISTA 2: Grelha de Cacifos da Estação Selecionada -->
+            <div id="lockers-view" style="display: none;">
+                <div class="lockers-header">
+                    <button class="btn-back" onclick="showStationsView()">← Voltar às Estações</button>
+                    <span id="current-station-name" style="font-weight: 700; font-size: 16px;"></span>
+                </div>
+
+                <div class="lockers-grid" id="lockers-grid">
+                    <!-- Gerado dinamicamente via JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentStationCode = '';
+
+        // Carregar Estações no arranque
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStations();
+        });
+
+        async function loadStations() {
+            try {
+                const response = await fetch('/api/v1/operator/stations');
+                const stations = await response.json();
+                const grid = document.getElementById('stations-grid');
+                grid.innerHTML = '';
+
+                stations.forEach(s => {
+                    const card = document.createElement('div');
+                    card.className = 'station-card';
+                    card.onclick = () => openStation(s.stationCode, s.name);
+                    card.innerHTML = `
+                        <div>
+                            <div class="station-header">
+                                <div class="station-title">${s.name}</div>
+                            </div>
+                            <div class="station-address">📍 ${s.address}, ${s.city}</div>
+                        </div>
+                        <div class="station-stats">
+                            <span class="stat-badge free">${s.freeCompartments} Livres</span>
+                            <span class="stat-badge">${s.totalCompartments} Total</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Erro ao carregar estações:", err);
+            }
+        }
+
+        async function openStation(stationCode, stationName) {
+            currentStationCode = stationCode;
+            document.getElementById('stations-view').style.display = 'none';
+            document.getElementById('lockers-view').style.display = 'block';
+            document.getElementById('view-title').textContent = stationName;
+            document.getElementById('view-subtitle').textContent = `Inspecione o estado físico de cada porta e execute ações de operador.`;
+            document.getElementById('current-station-name').textContent = `Estação: ${stationName}`;
+
+            await loadCompartments(stationCode);
+        }
+
+        function showStationsView() {
+            document.getElementById('stations-view').style.display = 'block';
+            document.getElementById('lockers-view').style.display = 'none';
+            document.getElementById('view-title').textContent = 'Estações de Cacifos';
+            document.getElementById('view-subtitle').textContent = 'Selecione uma estação para inspecionar os cacifos disponíveis.';
+            loadStations();
+        }
+
+        async function loadCompartments(stationCode) {
+            try {
+                const response = await fetch(`/api/v1/operator/stations/${stationCode}/compartments`);
+                const comps = await response.json();
+                const grid = document.getElementById('lockers-grid');
+                grid.innerHTML = '';
+
+                comps.forEach(c => {
+                    const card = document.createElement('div');
+                    
+                    // Regra de Cores de Fundo:
+                    // SEM encomenda (FREE) -> verde suave SEMPRE
+                    // COM encomenda (OCCUPIED / RESERVED) -> vermelho suave SEMPRE
+                    // AVARIADO (OUT_OF_SERVICE) -> amarelo suave
+                    let statusClass = 'free';
+                    let statusText = 'LIVRE (SEM ENCOMENDA)';
+                    
+                    if (c.state === 'OUT_OF_SERVICE') {
+                        statusClass = 'out-of-service';
+                        statusText = 'AVARIADO (MANUTENÇÃO)';
+                    } else if (c.state === 'OCCUPIED') {
+                        statusClass = 'unavailable';
+                        statusText = 'OCUPADO (COM ENCOMENDA)';
+                    } else if (c.state === 'RESERVED') {
+                        statusClass = 'unavailable';
+                        statusText = 'RESERVADO (COM ENCOMENDA)';
+                    }
+
+                    card.className = `locker-card ${statusClass}`;
+                    card.id = `comp-${c.compartmentNumber}`;
+                    card.dataset.statusClass = statusClass; // Preserva a cor de fundo do cacifo
+
+                    // Sensor: se fechada -> texto VERMELHO; se aberta -> texto VERDE
+                    const sensorClass = c.isDoorClosed ? 'closed' : 'open';
+                    const sensorText = c.isDoorClosed ? '🔒 Porta Fechada' : '🔓 Porta Aberta';
+
+                    card.innerHTML = `
+                        <div class="locker-top">
+                            <span class="locker-number">${c.compartmentNumber}</span>
+                            <span class="size-badge">Tam: ${c.dimension}</span>
+                        </div>
+                        <div>
+                            <span class="status-pill">${statusText}</span>
+                            <div class="door-sensor ${sensorClass}" id="sensor-${c.compartmentNumber}">
+                                ${sensorText}
+                            </div>
+                        </div>
+                        <div class="locker-actions">
+                            <button class="btn-action" onclick="unlockLocker('${c.compartmentNumber}')">🔓 Destrancar</button>
+                            <button class="btn-action" onclick="closeLocker('${c.compartmentNumber}')">🔒 Fechar</button>
+                            <button class="btn-action toggle-fault" onclick="toggleFault('${c.compartmentNumber}')">
+                                ${c.state === 'OUT_OF_SERVICE' ? '✅ Reparar Cacifo' : '⚠️ Sinalizar Avaria'}
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Erro ao carregar cacifos:", err);
+            }
+        }
+
+        async function unlockLocker(compNumber) {
+            const res = await fetch(`/api/v1/operator/stations/${currentStationCode}/compartments/${compNumber}/unlock`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                const sensorEl = document.getElementById(`sensor-${compNumber}`);
+                // Porta Aberta -> Texto VERDE
+                sensorEl.className = 'door-sensor open';
+                sensorEl.textContent = '🔓 Porta Aberta';
+                // O fundo do cartão permanece o mesmo (se é verde continua verde, se é vermelho continua vermelho!)
+            } else {
+                alert(`Aviso de Hardware: A porta ${compNumber} encravou ou está avariada!`);
+            }
+        }
+
+        async function closeLocker(compNumber) {
+            const res = await fetch(`/api/v1/operator/stations/${currentStationCode}/compartments/${compNumber}/close`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                const sensorEl = document.getElementById(`sensor-${compNumber}`);
+                // Porta Fechada -> Texto VERMELHO
+                sensorEl.className = 'door-sensor closed';
+                sensorEl.textContent = '🔒 Porta Fechada';
+                // O fundo do cartão permanece o mesmo!
+            }
+        }
+
+        async function toggleFault(compNumber) {
+            await fetch(`/api/v1/operator/stations/${currentStationCode}/compartments/${compNumber}/toggle-service`, { method: 'POST' });
+            await loadCompartments(currentStationCode);
+        }
+    </script>
+</body>
+</html>
