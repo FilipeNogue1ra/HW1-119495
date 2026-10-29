@@ -26,9 +26,11 @@
         <sonar.version>5.0.0.4389</sonar.version>
 
         <!-- SonarQube Quality Gate Properties -->
-        <sonar.organization>tqs-119495</sonar.organization>
-        <sonar.host.url>http://localhost:9000</sonar.host.url>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>filipenogue1ra</sonar.organization>
+        <sonar.projectKey>FilipeNogue1ra_HW1-119495</sonar.projectKey>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.exclusions>**/config/**,**/TuttiBoxApplication.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
