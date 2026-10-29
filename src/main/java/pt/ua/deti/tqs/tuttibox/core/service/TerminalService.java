@@ -49,7 +49,7 @@ public class TerminalService {
         this.clock = clock;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = DomainRuleException.class)
     public DropoffResponse dropoffParcel(String stationCode, DropoffRequest request) {
         LockerStation station = findStationOrThrow(stationCode);
 
@@ -100,7 +100,7 @@ public class TerminalService {
         );
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = DomainRuleException.class)
     public PickupResponse pickupParcel(String stationCode, PickupRequest request) {
         LockerStation station = findStationOrThrow(stationCode);
         Instant now = clock.instant();

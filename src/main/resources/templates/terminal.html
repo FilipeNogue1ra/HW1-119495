@@ -856,6 +856,7 @@
                     clearPin();
                 } else {
                     handleErrorResponse(response.status, data);
+                    clearPin();
                 }
             } catch (err) {
                 if (err.status === 500) {
@@ -979,6 +980,7 @@
         function startLockoutCountdown(seconds) {
             const overlay = document.getElementById('lockoutOverlay');
             const timerEl = document.getElementById('lockoutTimer');
+            overlay.classList.add('active');
             overlay.style.display = 'flex';
 
             let remaining = seconds;
@@ -990,6 +992,7 @@
                 remaining--;
                 if (remaining <= 0) {
                     clearInterval(lockoutInterval);
+                    overlay.classList.remove('active');
                     overlay.style.display = 'none';
                     setFeedback('Terminal desbloqueado. Pode tentar novamente.', 'success');
                     logEvent(`[SEGURANÇA] Período de bloqueio expirou. Terminal reativado.`, 'success');

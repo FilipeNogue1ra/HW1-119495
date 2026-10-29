@@ -82,6 +82,14 @@ public class InMemoryHardwareFake implements LockerHardwarePort {
         jammedCompartments.add(key(stationCode, compartmentNumber));
     }
 
+    public void simulateDoorJam(String stationCode, String compartmentNumber, boolean jammed) {
+        if (jammed) {
+            jammedCompartments.add(key(stationCode, compartmentNumber));
+        } else {
+            jammedCompartments.remove(key(stationCode, compartmentNumber));
+        }
+    }
+
     /**
      * Checks whether a compartment is currently configured with a simulated jam.
      */
