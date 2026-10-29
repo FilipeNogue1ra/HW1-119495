@@ -28,6 +28,11 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
+        :focus-visible {
+            outline: 3px solid #3b82f6 !important;
+            outline-offset: 2px !important;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-light);
@@ -613,18 +618,18 @@
             
             <div class="kiosk-screen">
                 <!-- Mode Switcher Tabs -->
-                <div class="screen-tabs">
-                    <div id="tabPickup" class="screen-tab active" onclick="switchMode('pickup')">📦 Levantamento (Destinatário)</div>
-                    <div id="tabDropoff" class="screen-tab" onclick="switchMode('dropoff')">🚚 Depósito (Estafeta)</div>
+                <div class="screen-tabs" role="tablist" aria-label="Modo de Operação do Quiosque">
+                    <button id="tabPickup" type="button" role="tab" aria-selected="true" class="screen-tab active" onclick="switchMode('pickup')">📦 Levantamento (Destinatário)</button>
+                    <button id="tabDropoff" type="button" role="tab" aria-selected="false" class="screen-tab" onclick="switchMode('dropoff')">🚚 Depósito (Estafeta)</button>
                 </div>
 
                 <!-- Pickup Mode View -->
-                <div id="pickupView">
+                <div id="pickupView" role="tabpanel" aria-labelledby="tabPickup">
                     <div class="pin-display-container">
                         <div class="pin-instruction">Introduza o seu Código PIN</div>
                         <div class="pin-subtext">Código de 6 dígitos enviado por SMS ou email</div>
                         
-                        <div class="pin-dots">
+                        <div class="pin-dots" aria-hidden="true">
                             <div class="pin-dot" id="dot0"></div>
                             <div class="pin-dot" id="dot1"></div>
                             <div class="pin-dot" id="dot2"></div>
@@ -634,28 +639,28 @@
                         </div>
 
                         <!-- Feedback Message Area -->
-                        <div id="screenFeedback" style="min-height: 24px; font-size: 13px; font-weight: 500; margin-top: 8px;"></div>
+                        <div id="screenFeedback" role="status" aria-live="polite" style="min-height: 24px; font-size: 13px; font-weight: 500; margin-top: 8px;"></div>
                     </div>
 
                     <!-- 0-9 Keypad -->
-                    <div class="keypad-grid">
-                        <button class="keypad-btn" onclick="pressDigit('1')">1</button>
-                        <button class="keypad-btn" onclick="pressDigit('2')">2</button>
-                        <button class="keypad-btn" onclick="pressDigit('3')">3</button>
-                        <button class="keypad-btn" onclick="pressDigit('4')">4</button>
-                        <button class="keypad-btn" onclick="pressDigit('5')">5</button>
-                        <button class="keypad-btn" onclick="pressDigit('6')">6</button>
-                        <button class="keypad-btn" onclick="pressDigit('7')">7</button>
-                        <button class="keypad-btn" onclick="pressDigit('8')">8</button>
-                        <button class="keypad-btn" onclick="pressDigit('9')">9</button>
-                        <button class="keypad-btn action-clear" onclick="clearPin()">C</button>
-                        <button class="keypad-btn" onclick="pressDigit('0')">0</button>
-                        <button class="keypad-btn action-enter" id="btnEnter" onclick="submitPickup()">OK</button>
+                    <div class="keypad-grid" role="group" aria-label="Teclado Numérico">
+                        <button type="button" class="keypad-btn" aria-label="Dígito 1" onclick="pressDigit('1')">1</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 2" onclick="pressDigit('2')">2</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 3" onclick="pressDigit('3')">3</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 4" onclick="pressDigit('4')">4</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 5" onclick="pressDigit('5')">5</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 6" onclick="pressDigit('6')">6</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 7" onclick="pressDigit('7')">7</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 8" onclick="pressDigit('8')">8</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 9" onclick="pressDigit('9')">9</button>
+                        <button type="button" class="keypad-btn action-clear" aria-label="Limpar PIN" onclick="clearPin()">C</button>
+                        <button type="button" class="keypad-btn" aria-label="Dígito 0" onclick="pressDigit('0')">0</button>
+                        <button type="button" class="keypad-btn action-enter" id="btnEnter" aria-label="Confirmar PIN" onclick="submitPickup()">OK</button>
                     </div>
                 </div>
 
                 <!-- Dropoff Mode View -->
-                <div id="dropoffView" class="dropoff-form">
+                <div id="dropoffView" class="dropoff-form" role="tabpanel" aria-labelledby="tabDropoff">
                     <div class="pin-instruction" style="text-align: center; margin-bottom: 8px;">Depósito pelo Estafeta</div>
                     <div class="pin-subtext" style="text-align: center; margin-bottom: 20px;">Digitalize ou introduza o código de rastreio</div>
 
@@ -664,16 +669,16 @@
                         <input type="text" id="trackingInput" class="form-input" placeholder="ex.: TB-2026-ABCD1234" autocomplete="off">
                     </div>
 
-                    <button class="door-action-btn" onclick="submitDropoff()" style="margin-top: 12px;">
+                    <button type="button" class="door-action-btn" onclick="submitDropoff()" style="margin-top: 12px;">
                         Destrancar Cacifo para Depósito
                     </button>
 
-                    <div id="dropoffFeedback" style="font-size: 13px; font-weight: 500; text-align: center; margin-top: 10px;"></div>
+                    <div id="dropoffFeedback" role="status" aria-live="polite" style="font-size: 13px; font-weight: 500; text-align: center; margin-top: 10px;"></div>
                 </div>
 
                 <!-- Lockout Overlay -->
-                <div id="lockoutOverlay" class="lockout-overlay">
-                    <div class="lockout-icon">🔒</div>
+                <div id="lockoutOverlay" class="lockout-overlay" role="alert" aria-live="assertive">
+                    <div class="lockout-icon" aria-hidden="true">🔒</div>
                     <div class="lockout-title">TERMINAL BLOQUEADO</div>
                     <div class="lockout-desc">Demasiadas tentativas de PIN inválidas consecutivas. O terminal foi bloqueado temporariamente por razões de segurança.</div>
                     <div class="lockout-countdown" id="lockoutTimer">60s</div>

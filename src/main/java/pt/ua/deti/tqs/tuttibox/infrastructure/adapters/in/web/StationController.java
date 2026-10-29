@@ -1,6 +1,7 @@
 package pt.ua.deti.tqs.tuttibox.infrastructure.adapters.in.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.deti.tqs.tuttibox.core.model.CompartmentState;
 import pt.ua.deti.tqs.tuttibox.core.model.LockerStation;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/stations")
+@Transactional(readOnly = true)
 public class StationController {
 
     private final LockerStationRepository stationRepo;
