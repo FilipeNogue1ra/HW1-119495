@@ -56,8 +56,10 @@ public class NominatimGeocodingAdapter implements GeocodingPort {
             return Optional.empty();
         }
 
+        String safeAddress = address.replace('\n', '_').replace('\r', '_');
+
         try {
-            log.info("Querying OpenStreetMap Nominatim for address: {}", address);
+            log.info("Querying OpenStreetMap Nominatim for address: {}", safeAddress);
             NominatimResult[] results = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/search")
@@ -74,7 +76,7 @@ public class NominatimGeocodingAdapter implements GeocodingPort {
                 return Optional.of(new GeoCoordinates(lat, lon, results[0].displayName()));
             }
         } catch (Exception e) {
-            log.warn("Geocoding service unavailable or failed for address '{}': {}", address, e.getMessage());
+            log.warn("Geocoding service unavailable or failed for address '{}': {}", safeAddress, e.getMessage());
         }
 
         return Optional.empty();
