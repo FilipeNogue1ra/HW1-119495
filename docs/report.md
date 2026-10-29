@@ -218,7 +218,7 @@ Developing TuttiBox provided comprehensive practical exposure to modern software
 * **Source Repository**: `https://github.com/FilipeNogue1ra/HW1-119495`
 * **Continuous Integration**: GitHub Actions CI (`.github/workflows/sonar.yml`)
 * **SonarCloud Project Dashboard**: `https://sonarcloud.io/project/overview?id=FilipeNogue1ra_HW1-119495`
-* **Demonstration Video**: `[URL to be added after video upload - following DEMO_VIDEO_SCRIPT.md]`
+* **Demonstration Video**: `docs/tuttibox_demo.webm` (Recorded walkthrough in repository covering OpenAPI specs, Courier Dropoff, Customer Pickup, Security Lockout defense, and Operator Dashboard)
 * **API Documentation**: Interactive Swagger UI at `http://localhost:8080/swagger-ui.html` and OpenAPI specification at `/v3/api-docs`.
 * **Testing Toolchain & Standards (aligned with TQS 2026/27 syllabus)**:
   - **Core Unit Testing**: JUnit 6 (Jupiter 6.1.3, BOM-managed), AssertJ.
