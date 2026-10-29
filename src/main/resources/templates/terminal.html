@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TuttiBox - Terminal do Cacifo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-color: #0f172a;
+            --kiosk-bg: #1e293b;
+            --screen-bg: #090d16;
+            --card-bg: #334155;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --text-light: #f8fafc;
+            --text-dim: #94a3b8;
+            --border-color: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header */
+        header {
+            background-color: #0b1120;
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+        }
+
+        .header-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .station-selector {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .nav-link {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        /* Main Workspace Container */
+        .workspace {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 32px;
+            padding: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Kiosk Simulation Frame (Left Panel) */
+        .kiosk-chassis {
+            background: var(--kiosk-bg);
+            border-radius: 24px;
+            border: 4px solid #334155;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .kiosk-bezel-title {
+            text-align: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .kiosk-screen {
+            background: var(--screen-bg);
+            border: 2px solid #1e293b;
+            border-radius: 16px;
+            padding: 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* Tabs on Screen */
+        .screen-tabs {
+            display: flex;
+            background: #131b2e;
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid #1e293b;
+        }
+
+        .screen-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dim);
+        }
+
+        .screen-tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.4);
+        }
+
+        /* PIN Display */
+        .pin-display-container {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .pin-instruction {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-light);
+            margin-bottom: 6px;
+        }
+
+        .pin-subtext {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 18px;
+        }
+
+        .pin-dots {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .pin-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        .pin-dot.filled {
+            background: var(--primary);
+            border-color: #60a5fa;
+            box-shadow: 0 0 10px rgba(96,165,250,0.6);
+            transform: scale(1.1);
+        }
+
+        /* Keypad Grid */
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 320px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .keypad-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            padding: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .keypad-btn:hover:not(:disabled) {
+            background: #27354a;
+            border-color: #475569;
+            transform: translateY(-2px);
+        }
+
+        .keypad-btn:active:not(:disabled) {
+            transform: translateY(1px);
+            background: #1e293b;
+        }
+
+        .keypad-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .keypad-btn.action-clear {
+            background: #3f1d24;
+            color: #f87171;
+            border-color: #7f1d1d;
+            font-size: 16px;
+        }
+
+        .keypad-btn.action-clear:hover:not(:disabled) {
+            background: #4f232b;
+        }
+
+        .keypad-btn.action-enter {
+            background: #064e3b;
+            color: #34d399;
+            border-color: #047857;
+            font-size: 16px;
+        }
+
+        .keypad-btn.action-enter:hover:not(:disabled) {
+            background: #08614a;
+        }
+
+        /* Lockout Screen Overlay */
+        .lockout-overlay {
+            display: none;
+            background: rgba(15, 23, 42, 0.95);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            padding: 32px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 50;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lockout-icon {
+            font-size: 54px;
+            margin-bottom: 16px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .lockout-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f87171;
+            margin-bottom: 8px;
+        }
+
+        .lockout-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            max-width: 320px;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .lockout-countdown {
+            font-size: 42px;
+            font-weight: 800;
+            color: #ef4444;
+            font-family: monospace;
+            background: #2a1215;
+            padding: 10px 24px;
+            border-radius: 12px;
+            border: 2px solid #7f1d1d;
+        }
+
+        /* Right Panel: Cyber-Physical Hardware Simulation */
+        .hardware-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .panel-card {
+            background: var(--kiosk-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-header h2 {
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Locker Compartment Door Visualizer */
+        .door-visualizer-container {
+            background: #090d16;
+            border-radius: 14px;
+            border: 2px solid var(--border-color);
+            padding: 28px;
+            text-align: center;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .door-graphic {
+            width: 140px;
+            height: 110px;
+            margin: 0 auto 20px;
+            border-radius: 10px;
+            border: 4px solid #475569;
+            background: #1e293b;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .door-graphic.open {
+            border-color: var(--accent-green);
+            background: #064e3b;
+            box-shadow: 0 0 25px rgba(16,185,129,0.3);
+            transform: perspective(600px) rotateY(-35deg);
+        }
+
+        .door-graphic.jammed {
+            border-color: var(--accent-red);
+            background: #450a0a;
+            box-shadow: 0 0 25px rgba(239,68,68,0.3);
+        }
+
+        .door-badge {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .door-badge.closed {
+            background: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            border: 1px solid #475569;
+        }
+
+        .door-badge.opened {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid #059669;
+        }
+
+        .door-badge.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid #dc2626;
+        }
+
+        .door-action-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .door-action-btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .door-action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Failure Injection Controls */
+        .failure-box {
+            background: #1e1b4b;
+            border: 1px solid #4338ca;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .failure-box label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #c7d2fe;
+            cursor: pointer;
+        }
+
+        .failure-box input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #6366f1;
+            cursor: pointer;
+        }
+
+        /* Live Hardware Audit Log */
+        .log-box {
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 14px;
+            height: 180px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        .log-time {
+            color: #64748b;
+        }
+
+        .log-success {
+            color: #34d399;
+        }
+
+        .log-warn {
+            color: #fbbf24;
+        }
+
+        .log-error {
+            color: #f87171;
+        }
+
+        /* Dropoff Form */
+        .dropoff-form {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .form-input {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-brand">
+            <div class="logo-box">TB</div>
+            <div class="header-title">
+                <h1>TuttiBox Terminal</h1>
+                <p>Simulador de Quiosque Tátil e Hardware de Cacifo</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <label for="stationSelect" style="font-size: 13px; color: var(--text-dim);">Estação:</label>
+            <select id="stationSelect" class="station-selector" onchange="switchStation(this.value)">
+                <option th:each="s : ${stations}" 
+                        th:value="${s.stationCode}" 
+                        th:text="${s.name + ' (' + s.city + ')'}" 
+                        th:selected="${selectedStation != null and s.stationCode == selectedStation.stationCode}">
+                    Estação CP Aveiro
+                </option>
+            </select>
+
+            <a href="/operator" class="nav-link">Painel do Operador &rarr;</a>
+            <a href="/swagger-ui.html" target="_blank" class="nav-link">Swagger API</a>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        
+        <!-- Left Column: Kiosk Screen & Keypad -->
+        <div class="kiosk-chassis">
+            <div class="kiosk-bezel-title">Ecrã Tátil do Terminal &bull; TuttiBox OS v1.0</div>
+            
+            <div class="kiosk-screen">
+                <!-- Mode Switcher Tabs -->
+                <div class="screen-tabs">
+                    <div id="tabPickup" class="screen-tab active" onclick="switchMode('pickup')">📦 Levantamento (Destinatário)</div>
+                    <div id="tabDropoff" class="screen-tab" onclick="switchMode('dropoff')">🚚 Depósito (Estafeta)</div>
+                </div>
+
+                <!-- Pickup Mode View -->
+                <div id="pickupView">
+                    <div class="pin-display-container">
+                        <div class="pin-instruction">Introduza o seu Código PIN</div>
+                        <div class="pin-subtext">Código de 6 dígitos enviado por SMS ou email</div>
+                        
+                        <div class="pin-dots">
+                            <div class="pin-dot" id="dot0"></div>
+                            <div class="pin-dot" id="dot1"></div>
+                            <div class="pin-dot" id="dot2"></div>
+                            <div class="pin-dot" id="dot3"></div>
+                            <div class="pin-dot" id="dot4"></div>
+                            <div class="pin-dot" id="dot5"></div>
+                        </div>
+
+                        <!-- Feedback Message Area -->
+                        <div id="screenFeedback" style="min-height: 24px; font-size: 13px; font-weight: 500; margin-top: 8px;"></div>
+                    </div>
+
+                    <!-- 0-9 Keypad -->
+                    <div class="keypad-grid">
+                        <button class="keypad-btn" onclick="pressDigit('1')">1</button>
+                        <button class="keypad-btn" onclick="pressDigit('2')">2</button>
+                        <button class="keypad-btn" onclick="pressDigit('3')">3</button>
+                        <button class="keypad-btn" onclick="pressDigit('4')">4</button>
+                        <button class="keypad-btn" onclick="pressDigit('5')">5</button>
+                        <button class="keypad-btn" onclick="pressDigit('6')">6</button>
+                        <button class="keypad-btn" onclick="pressDigit('7')">7</button>
+                        <button class="keypad-btn" onclick="pressDigit('8')">8</button>
+                        <button class="keypad-btn" onclick="pressDigit('9')">9</button>
+                        <button class="keypad-btn action-clear" onclick="clearPin()">C</button>
+                        <button class="keypad-btn" onclick="pressDigit('0')">0</button>
+                        <button class="keypad-btn action-enter" id="btnEnter" onclick="submitPickup()">OK</button>
+                    </div>
+                </div>
+
+                <!-- Dropoff Mode View -->
+                <div id="dropoffView" class="dropoff-form">
+                    <div class="pin-instruction" style="text-align: center; margin-bottom: 8px;">Depósito pelo Estafeta</div>
+                    <div class="pin-subtext" style="text-align: center; margin-bottom: 20px;">Digitalize ou introduza o código de rastreio</div>
+
+                    <div class="form-group">
+                        <label for="trackingInput">Código de Rastreio (Tracking Code):</label>
+                        <input type="text" id="trackingInput" class="form-input" placeholder="ex.: TB-2026-ABCD1234" autocomplete="off">
+                    </div>
+
+                    <button class="door-action-btn" onclick="submitDropoff()" style="margin-top: 12px;">
+                        Destrancar Cacifo para Depósito
+                    </button>
+
+                    <div id="dropoffFeedback" style="font-size: 13px; font-weight: 500; text-align: center; margin-top: 10px;"></div>
+                </div>
+
+                <!-- Lockout Overlay -->
+                <div id="lockoutOverlay" class="lockout-overlay">
+                    <div class="lockout-icon">🔒</div>
+                    <div class="lockout-title">TERMINAL BLOQUEADO</div>
+                    <div class="lockout-desc">Demasiadas tentativas de PIN inválidas consecutivas. O terminal foi bloqueado temporariamente por razões de segurança.</div>
+                    <div class="lockout-countdown" id="lockoutTimer">60s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Cyber-Physical Hardware Simulation -->
+        <div class="hardware-panel">
+            
+            <!-- Compartment Door Simulator Card -->
+            <div class="panel-card">
+                <div class="card-header">
+                    <h2>🚪 Simulação Cyber-Física da Porta</h2>
+                    <span id="stationCodeBadge" class="door-badge closed" th:text="${selectedStation != null ? selectedStation.stationCode : 'STATION'}">STATION</span>
+                </div>
+
+                <div class="door-visualizer-container">
+                    <div id="doorGraphic" class="door-graphic">
+                        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; text-align: left;">CACIFO</div>
+                        <div id="compartmentLabel" style="font-size: 26px; font-weight: 800; color: white;">--</div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #64748b; margin-left: auto;"></div>
+                    </div>
+
+                    <div>
+                        <span id="doorStatusBadge" class="door-badge closed">Tranca Trancada &bull; Porta Fechada</span>
+                    </div>
+                </div>
+
+                <button id="btnCloseDoor" class="door-action-btn" onclick="simulateCloseDoor()" disabled>
+                    Simular: Fechar Porta Fisicamente
+                </button>
+
+                <!-- Failure Injection Box for Evaluation -->
+                <div class="failure-box">
+                    <label>
+                        <input type="checkbox" id="checkSimulateJam">
+                        <span>Injetar Falha: Simular Tranca Solenóide Encravada (BR7)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Hardware Event Log -->
+            <div class="panel-card" style="flex: 1;">
+                <div class="card-header" style="margin-bottom: 12px;">
+                    <h2>📟 Registo de Sinais de Hardware</h2>
+                    <button onclick="clearLogs()" style="background: transparent; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer;">Limpar</button>
+                </div>
+
+                <div id="hardwareLog" class="log-box">
+                    <div class="log-entry"><span class="log-time">[SISTEMA]</span> <span class="log-success">Microcontrolador inicializado. Sensores magnéticos operacionais.</span></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Interactive Client Script -->
+    <script th:inline="javascript">
+        let currentPin = '';
+        let currentStation = /*[[${selectedStation != null ? selectedStation.stationCode : 'STATION-AVEIRO-01'}]]*/ 'STATION-AVEIRO-01';
+        let activeCompartment = null;
+        let activeTrackingCode = null;
+        let isDoorOpen = false;
+        let lockoutInterval = null;
+
+        // Initialize status on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkTerminalStatus();
+            setupKeyboardListeners();
+        });
+
+        function switchStation(stationCode) {
+            window.location.href = '/terminal?station=' + stationCode;
+        }
+
+        function switchMode(mode) {
+            if (mode === 'pickup') {
+                document.getElementById('tabPickup').classList.add('active');
+                document.getElementById('tabDropoff').classList.remove('active');
+                document.getElementById('pickupView').style.display = 'block';
+                document.getElementById('dropoffView').style.display = 'none';
+            } else {
+                document.getElementById('tabDropoff').classList.add('active');
+                document.getElementById('tabPickup').classList.remove('active');
+                document.getElementById('pickupView').style.display = 'none';
+                document.getElementById('dropoffView').style.display = 'flex';
+            }
+        }
+
+        // Keypad Interactions
+        function pressDigit(digit) {
+            if (currentPin.length < 6) {
+                currentPin += digit;
+                updatePinDisplay();
+            }
+        }
+
+        function clearPin() {
+            currentPin = '';
+            updatePinDisplay();
+            setFeedback('', '');
+        }
+
+        function updatePinDisplay() {
+            for (let i = 0; i < 6; i++) {
+                const dot = document.getElementById('dot' + i);
+                if (i < currentPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            }
+        }
+
+        function setupKeyboardListeners() {
+            document.addEventListener('keydown', (e) => {
+                // If focus is in text input, ignore
+                if (e.target.tagName === 'INPUT') return;
+
+                if (e.key >= '0' && e.key <= '9') {
+                    pressDigit(e.key);
+                } else if (e.key === 'Backspace') {
+                    currentPin = currentPin.slice(0, -1);
+                    updatePinDisplay();
+                } else if (e.key === 'Enter') {
+                    if (currentPin.length === 6) {
+                        submitPickup();
+                    }
+                } else if (e.key === 'Escape') {
+                    clearPin();
+                }
+            });
+        }
+
+        function setFeedback(msg, type) {
+            const el = document.getElementById('screenFeedback');
+            el.textContent = msg;
+            if (type === 'error') {
+                el.style.color = '#f87171';
+            } else if (type === 'success') {
+                el.style.color = '#34d399';
+            } else {
+                el.style.color = 'var(--text-dim)';
+            }
+        }
+
+        // API Call: Recipient Pickup
+        async function submitPickup() {
+            if (currentPin.length !== 6) {
+                setFeedback('Por favor introduza exatamente 6 dígitos.', 'error');
+                return;
+            }
+
+            const simulateJam = document.getElementById('checkSimulateJam').checked;
+            logEvent(`Sinal enviado: Destrancar por PIN na estação ${currentStation}...`, 'warn');
+
+            try {
+                // If test failure injection is checked, we can simulate jam directly
+                if (simulateJam) {
+                    throw { status: 500, detail: 'Falha de hardware: tranca solenóide encravada. Alerta enviado ao operador.' };
+                }
+
+                const response = await fetch(`/api/v1/terminals/${currentStation}/pickup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: currentPin })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success! Unlock door visually
+                    activeCompartment = data.compartmentNumber;
+                    activeTrackingCode = data.trackingCode;
+                    triggerDoorOpen(data.compartmentNumber, 'Recolha');
+                    setFeedback(`Sucesso! Cacifo ${data.compartmentNumber} aberto. Retire a sua encomenda.`, 'success');
+                    logEvent(`[HARDWARE] Solenóide ativado no cacifo ${data.compartmentNumber}. Sensor magnético: ABERTO.`, 'success');
+                    clearPin();
+                } else {
+                    handleErrorResponse(response.status, data);
+                }
+            } catch (err) {
+                if (err.status === 500) {
+                    triggerDoorJammed('A01');
+                    setFeedback(err.detail, 'error');
+                    logEvent(`[HARDWARE ALERTA] Tranca encravada! Compartimento colocado em OUT_OF_SERVICE.`, 'error');
+                } else {
+                    setFeedback('Erro de comunicação com o terminal.', 'error');
+                }
+                clearPin();
+            }
+        }
+
+        // API Call: Courier Dropoff
+        async function submitDropoff() {
+            const tracking = document.getElementById('trackingInput').value.trim();
+            const feedback = document.getElementById('dropoffFeedback');
+
+            if (!tracking) {
+                feedback.textContent = 'Introduza o código de rastreio.';
+                feedback.style.color = '#f87171';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/terminals/${currentStation}/dropoff`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trackingCode: tracking })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    feedback.textContent = `Cacifo ${data.compartmentNumber} aberto para depósito! Feche a porta após depositar.`;
+                    feedback.style.color = '#34d399';
+                    activeCompartment = data.compartmentNumber;
+                    activeTrackingCode = tracking;
+                    triggerDoorOpen(data.compartmentNumber, 'Depósito');
+                    logEvent(`[ESTAFETA] Cacifo ${data.compartmentNumber} aberto para depósito da encomenda ${tracking}.`, 'success');
+                    document.getElementById('trackingInput').value = '';
+                } else {
+                    feedback.textContent = data.detail || 'Não foi possível autorizar o depósito.';
+                    feedback.style.color = '#f87171';
+                    logEvent(`[ERRO] ${data.title}: ${data.detail}`, 'error');
+                }
+            } catch (e) {
+                feedback.textContent = 'Erro ao comunicar com o servidor.';
+                feedback.style.color = '#f87171';
+            }
+        }
+
+        function handleErrorResponse(status, data) {
+            if (status === 401) {
+                setFeedback(data.detail || 'PIN Incorreto!', 'error');
+                logEvent(`[SEGURANÇA] Tentativa de PIN inválida. ${data.detail}`, 'warn');
+            } else if (status === 429) {
+                setFeedback('Terminal Bloqueado por 60 segundos!', 'error');
+                logEvent(`[SEGURANÇA] Bloqueio de 60s acionado após 3 tentativas consecutivas!`, 'error');
+                startLockoutCountdown(60);
+            } else if (status === 500) {
+                triggerDoorJammed(activeCompartment || 'A01');
+                setFeedback(data.detail || 'Falha de hardware: porta encravada.', 'error');
+                logEvent(`[HARDWARE] Tranca encravada durante abertura.`, 'error');
+            } else {
+                setFeedback(data.detail || 'Erro na operação.', 'error');
+                logEvent(`[ERRO] ${data.title}: ${data.detail}`, 'error');
+            }
+        }
+
+        // Hardware Door Operations
+        function triggerDoorOpen(compNum, actionType) {
+            isDoorOpen = true;
+            document.getElementById('compartmentLabel').textContent = compNum;
+            const doorGraphic = document.getElementById('doorGraphic');
+            const statusBadge = document.getElementById('doorStatusBadge');
+            const btnClose = document.getElementById('btnCloseDoor');
+
+            doorGraphic.classList.remove('jammed');
+            doorGraphic.classList.add('open');
+
+            statusBadge.className = 'door-badge opened';
+            statusBadge.innerHTML = `&bull; Cacifo ${compNum} Aberto (${actionType})`;
+
+            btnClose.disabled = false;
+        }
+
+        function triggerDoorJammed(compNum) {
+            document.getElementById('compartmentLabel').textContent = compNum;
+            const doorGraphic = document.getElementById('doorGraphic');
+            const statusBadge = document.getElementById('doorStatusBadge');
+
+            doorGraphic.classList.remove('open');
+            doorGraphic.classList.add('jammed');
+
+            statusBadge.className = 'door-badge error';
+            statusBadge.innerHTML = `⚠️ Tranca Encravada &bull; Alerta Operador`;
+        }
+
+        function simulateCloseDoor() {
+            if (!isDoorOpen) return;
+
+            isDoorOpen = false;
+            const doorGraphic = document.getElementById('doorGraphic');
+            const statusBadge = document.getElementById('doorStatusBadge');
+            const btnClose = document.getElementById('btnCloseDoor');
+
+            doorGraphic.classList.remove('open', 'jammed');
+            statusBadge.className = 'door-badge closed';
+            statusBadge.innerHTML = `Tranca Trancada &bull; Porta Fechada`;
+            btnClose.disabled = true;
+
+            logEvent(`[HARDWARE] Sensor magnético detetou fecho físico da porta no cacifo ${activeCompartment}. Tranca solenóide armada.`, 'success');
+            setFeedback('Porta fechada com sucesso. Obrigado por utilizar o TuttiBox!', 'success');
+
+            activeCompartment = null;
+            activeTrackingCode = null;
+        }
+
+        // Lockout Timer
+        function startLockoutCountdown(seconds) {
+            const overlay = document.getElementById('lockoutOverlay');
+            const timerEl = document.getElementById('lockoutTimer');
+            overlay.style.display = 'flex';
+
+            let remaining = seconds;
+            timerEl.textContent = remaining + 's';
+
+            if (lockoutInterval) clearInterval(lockoutInterval);
+
+            lockoutInterval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(lockoutInterval);
+                    overlay.style.display = 'none';
+                    setFeedback('Terminal desbloqueado. Pode tentar novamente.', 'success');
+                    logEvent(`[SEGURANÇA] Período de bloqueio expirou. Terminal reativado.`, 'success');
+                } else {
+                    timerEl.textContent = remaining + 's';
+                }
+            }, 1000);
+        }
+
+        async function checkTerminalStatus() {
+            try {
+                const res = await fetch(`/api/v1/terminals/${currentStation}/status`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.locked && data.remainingLockoutSeconds > 0) {
+                        startLockoutCountdown(data.remainingLockoutSeconds);
+                    }
+                }
+            } catch (e) {
+                // Ignore silent status check error
+            }
+        }
+
+        // Logging helper
+        function logEvent(text, type) {
+            const logBox = document.getElementById('hardwareLog');
+            const now = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            let colorClass = '';
+            if (type === 'success') colorClass = 'log-success';
+            else if (type === 'warn') colorClass = 'log-warn';
+            else if (type === 'error') colorClass = 'log-error';
+
+            entry.innerHTML = `<span class="log-time">[${now}]</span> <span class="${colorClass}">${text}</span>`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('hardwareLog').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
