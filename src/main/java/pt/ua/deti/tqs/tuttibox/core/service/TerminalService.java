@@ -51,6 +51,7 @@ public class TerminalService {
 
     @Transactional(noRollbackFor = DomainRuleException.class)
     public DropoffResponse dropoffParcel(String stationCode, DropoffRequest request) {
+        String safeStationCode = sanitize(stationCode);
         LockerStation station = findStationOrThrow(stationCode);
 
         Parcel parcel = parcelRepo.findByTrackingCode(request.trackingCode())
@@ -60,7 +61,7 @@ public class TerminalService {
         if (!parcel.getStation().getStationCode().equals(station.getStationCode())) {
             throw new DomainRuleException("INVALID_STATION",
                     "Parcel '" + request.trackingCode() + "' is assigned to station '"
-                            + parcel.getStation().getStationCode() + "', not '" + stationCode + "'.");
+                            + parcel.getStation().getStationCode() + "', not '" + safeStationCode + "'.");
         }
 
         if (parcel.getState() != ParcelState.CREATED) {
@@ -73,7 +74,7 @@ public class TerminalService {
         // Hardware command: pop open compartment door for courier
         boolean unlocked = lockerHardwarePort.unlockDoor(stationCode, compartmentNumber);
         if (!unlocked) {
-            log.error("Hardware fault: failed to unlock compartment {} at station {}", compartmentNumber, stationCode);
+            log.error("Hardware fault: failed to unlock compartment {} at station {}", compartmentNumber, safeStationCode);
             throw new DomainRuleException("DOOR_UNLOCK_FAILED",
                     "Hardware failure: unable to unlock compartment " + compartmentNumber + " for deposit.");
         }
@@ -88,7 +89,7 @@ public class TerminalService {
         compartmentRepo.save(parcel.getCompartment());
 
         log.info("Courier dropped off parcel '{}' in compartment '{}' at station '{}'",
-                parcel.getTrackingCode(), compartmentNumber, stationCode);
+                parcel.getTrackingCode(), compartmentNumber, safeStationCode);
 
         return new DropoffResponse(
                 parcel.getTrackingCode(),
@@ -102,13 +103,14 @@ public class TerminalService {
 
     @Transactional(noRollbackFor = DomainRuleException.class)
     public PickupResponse pickupParcel(String stationCode, PickupRequest request) {
+        String safeStationCode = sanitize(stationCode);
         LockerStation station = findStationOrThrow(stationCode);
         Instant now = clock.instant();
 
         // 1. Check if terminal is currently locked
         if (station.isLocked(now)) {
             long remaining = Duration.between(now, station.getLockedUntil()).toSeconds();
-            log.warn("Pickup attempt rejected: terminal '{}' is locked for {} more seconds", stationCode, remaining);
+            log.warn("Pickup attempt rejected: terminal '{}' is locked for {} more seconds", safeStationCode, remaining);
             throw new DomainRuleException("TERMINAL_LOCKED",
                     "Terminal is locked due to consecutive failed attempts. Please wait " + remaining + " seconds.");
         }
@@ -155,7 +157,7 @@ public class TerminalService {
         // 4. Hardware command: unlock door for recipient
         boolean unlocked = lockerHardwarePort.unlockDoor(stationCode, compartmentNumber);
         if (!unlocked) {
-            log.error("Hardware fault: compartment door {} jammed on pickup at station {}", compartmentNumber, stationCode);
+            log.error("Hardware fault: compartment door {} jammed on pickup at station {}", compartmentNumber, safeStationCode);
             stateMachineService.transitionToWaitingForOperatorOnJammed(parcel, "Compartment door mechanical jam on customer pickup.");
             parcelRepo.save(parcel);
             compartmentRepo.save(parcel.getCompartment());
@@ -173,7 +175,7 @@ public class TerminalService {
         compartmentRepo.save(parcel.getCompartment());
 
         log.info("Recipient picked up parcel '{}' from compartment '{}' at station '{}'",
-                parcel.getTrackingCode(), compartmentNumber, stationCode);
+                parcel.getTrackingCode(), compartmentNumber, safeStationCode);
 
         return new PickupResponse(
                 parcel.getTrackingCode(),
@@ -203,16 +205,17 @@ public class TerminalService {
         station.recordFailedPinAttempt(now, MAX_FAILED_ATTEMPTS, LOCKOUT_SECONDS);
         stationRepo.save(station);
 
+        String safeStationCode = sanitize(station.getStationCode());
         if (station.isLocked(now)) {
             long remaining = Duration.between(now, station.getLockedUntil()).toSeconds();
             log.warn("Terminal '{}' locked out for {} seconds after {} failed attempts",
-                    station.getStationCode(), remaining, MAX_FAILED_ATTEMPTS);
+                    safeStationCode, remaining, MAX_FAILED_ATTEMPTS);
             throw new DomainRuleException("TERMINAL_LOCKED",
                     "3 invalid PIN attempts. Terminal is locked for " + remaining + " seconds.");
         } else {
             int remainingAttempts = MAX_FAILED_ATTEMPTS - station.getConsecutiveFailedPins();
             log.warn("Invalid PIN attempt at station '{}'. Remaining attempts before lockout: {}",
-                    station.getStationCode(), remainingAttempts);
+                    safeStationCode, remainingAttempts);
             throw new DomainRuleException("INVALID_PIN",
                     "Invalid PIN. Remaining attempts before lockout: " + remainingAttempts);
         }
@@ -222,5 +225,9 @@ public class TerminalService {
         return stationRepo.findByStationCode(stationCode)
                 .orElseThrow(() -> new DomainRuleException("STATION_NOT_FOUND",
                         "Station with code '" + stationCode + "' does not exist."));
+    }
+
+    private static String sanitize(String input) {
+        return input == null ? "" : input.replace('\n', '_').replace('\r', '_');
     }
 }
