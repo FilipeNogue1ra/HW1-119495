@@ -72,4 +72,22 @@ public class StationRankingService {
         rankedList.sort(Comparator.comparingDouble(StationDistance::distanceKm));
         return rankedList;
     }
+
+    /**
+     * Ranks locker stations by proximity given direct GPS coordinates.
+     *
+     * @param userLat user latitude in degrees
+     * @param userLon user longitude in degrees
+     * @param stations list of candidate locker stations
+     * @return list of StationDistance sorted in ascending order (nearest station first)
+     */
+    public List<StationDistance> rankStationsByCoordinates(double userLat, double userLon, List<LockerStation> stations) {
+        List<StationDistance> rankedList = new ArrayList<>();
+        for (LockerStation station : stations) {
+            double dist = calculateDistanceKm(userLat, userLon, station.getLatitude(), station.getLongitude());
+            rankedList.add(new StationDistance(station, dist));
+        }
+        rankedList.sort(Comparator.comparingDouble(StationDistance::distanceKm));
+        return rankedList;
+    }
 }

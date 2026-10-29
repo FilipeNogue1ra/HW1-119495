@@ -94,4 +94,17 @@ class StationRankingServiceTest {
         );
         assertEquals("GEOCODING_NOT_FOUND", ex.getErrorCode());
     }
+
+    @Test
+    @DisplayName("Ordenação de estações por coordenadas GPS diretas")
+    void testRankStationsByCoordinates() {
+        // Coordenadas da Estação CP Aveiro
+        List<StationRankingService.StationDistance> ranked = rankingService.rankStationsByCoordinates(40.6433, -8.6406, stations);
+
+        assertNotNull(ranked);
+        assertEquals(4, ranked.size());
+        assertEquals("STATION-AVEIRO-01", ranked.get(0).station().getStationCode());
+        assertEquals(0.0, ranked.get(0).distanceKm());
+        assertTrue(ranked.get(0).distanceKm() <= ranked.get(1).distanceKm());
+    }
 }
