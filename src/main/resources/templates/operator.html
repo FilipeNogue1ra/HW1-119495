@@ -396,10 +396,15 @@
 
     <!-- 2. Conteúdo Principal -->
     <main class="main-content">
-        <header class="topbar">
+        <header class="topbar" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h1 id="view-title">Estações de Cacifos</h1>
                 <div class="topbar-subtitle" id="view-subtitle">Selecione uma estação para inspecionar os cacifos disponíveis.</div>
+            </div>
+            <div>
+                <button onclick="resetWholeSystem()" style="background: #ef4444; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">
+                    🔄 Restaurar Padrão / Reset Geral
+                </button>
             </div>
         </header>
 
@@ -532,6 +537,7 @@
                         <div class="locker-actions">
                             <button class="btn-action" onclick="unlockLocker('${c.compartmentNumber}')">🔓 Destrancar</button>
                             <button class="btn-action" onclick="closeLocker('${c.compartmentNumber}')">🔒 Fechar</button>
+                            <button class="btn-action" style="background:#fee2e2; color:#991b1b; border-color:#fca5a5;" onclick="freeLocker('${c.compartmentNumber}')">🗑️ Esvaziar / Libertar</button>
                             <button class="btn-action toggle-fault" onclick="toggleFault('${c.compartmentNumber}')">
                                 ${c.state === 'OUT_OF_SERVICE' ? '✅ Reparar Cacifo' : '⚠️ Sinalizar Avaria'}
                             </button>
@@ -573,6 +579,35 @@
         async function toggleFault(compNumber) {
             await fetch(`/api/v1/operator/stations/${currentStationCode}/compartments/${compNumber}/toggle-service`, { method: 'POST' });
             await loadCompartments(currentStationCode);
+        }
+
+        async function freeLocker(compNumber) {
+            if (!confirm(`Tem a certeza que deseja esvaziar o cacifo ${compNumber} e remover a encomenda associada?`)) {
+                return;
+            }
+            const res = await fetch(`/api/v1/operator/stations/${currentStationCode}/compartments/${compNumber}/free`, { method: 'POST' });
+            if (res.ok) {
+                await loadCompartments(currentStationCode);
+            } else {
+                alert('Erro ao esvaziar cacifo.');
+            }
+        }
+
+        async function resetWholeSystem() {
+            if (!confirm('Deseja repor todas as estações e cacifos para o estado padrão LIVRE e limpar todas as encomendas?')) {
+                return;
+            }
+            const res = await fetch('/api/v1/operator/reset', { method: 'POST' });
+            if (res.ok) {
+                alert('Sistema restaurado com sucesso!');
+                if (currentStationCode) {
+                    await loadCompartments(currentStationCode);
+                } else {
+                    await loadStations();
+                }
+            } else {
+                alert('Erro ao reiniciar sistema.');
+            }
         }
     </script>
 </body>

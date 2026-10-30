@@ -64,7 +64,8 @@ class ParcelServiceTest {
                 true // allow S to M fallback
         );
 
-        station = new LockerStation("STATION-AVEIRO-01", "Estação CP Aveiro", "Largo da Estação", "Aveiro", 40.6433, -8.6406);
+        station = new LockerStation("STATION-AVEIRO-01", "Estação CP Aveiro", "Largo da Estação", "Aveiro", 40.6433,
+                -8.6406);
         compartmentS = new Compartment(station, "A01", Dimension.S);
         compartmentM = new Compartment(station, "B01", Dimension.M);
     }
@@ -72,7 +73,8 @@ class ParcelServiceTest {
     @Test
     @DisplayName("UC1: Alocação exata - pacote S é alocado no cacifo S disponível")
     void testCreateParcelExactSizeMatch() {
-        CreateParcelRequest request = new CreateParcelRequest(Dimension.S, "+351912345678", "client@ua.pt", "STATION-AVEIRO-01");
+        CreateParcelRequest request = new CreateParcelRequest(Dimension.S, "+351912345678", "client@ua.pt",
+                "STATION-AVEIRO-01");
 
         when(stationRepo.findByStationCode("STATION-AVEIRO-01")).thenReturn(Optional.of(station));
         when(compartmentRepo.findAvailableForUpdate(station, CompartmentState.FREE, Dimension.S))
@@ -94,7 +96,8 @@ class ParcelServiceTest {
     @Test
     @DisplayName("Regra 1 (Fallback): pacote S usa cacifo M quando todos os S estão esgotados")
     void testCreateParcelFallbackSToM() {
-        CreateParcelRequest request = new CreateParcelRequest(Dimension.S, "+351912345678", "client@ua.pt", "STATION-AVEIRO-01");
+        CreateParcelRequest request = new CreateParcelRequest(Dimension.S, "+351912345678", "client@ua.pt",
+                "STATION-AVEIRO-01");
 
         when(stationRepo.findByStationCode("STATION-AVEIRO-01")).thenReturn(Optional.of(station));
         // Nenhum S livre
@@ -115,30 +118,29 @@ class ParcelServiceTest {
     @Test
     @DisplayName("Rejeição: Estação cheia lança DomainRuleException (NO_LOCKERS_AVAILABLE)")
     void testCreateParcelFailsWhenStationFull() {
-        CreateParcelRequest request = new CreateParcelRequest(Dimension.L, "+351912345678", "client@ua.pt", "STATION-AVEIRO-01");
+        CreateParcelRequest request = new CreateParcelRequest(Dimension.L, "+351912345678", "client@ua.pt",
+                "STATION-AVEIRO-01");
 
         when(stationRepo.findByStationCode("STATION-AVEIRO-01")).thenReturn(Optional.of(station));
         when(compartmentRepo.findAvailableForUpdate(station, CompartmentState.FREE, Dimension.L))
                 .thenReturn(Collections.emptyList());
 
-        DomainRuleException ex = assertThrows(DomainRuleException.class, () ->
-                parcelService.createParcel(request)
-        );
+        DomainRuleException ex = assertThrows(DomainRuleException.class, () -> parcelService.createParcel(request));
 
         assertEquals("NO_LOCKERS_AVAILABLE", ex.getErrorCode());
+
         verify(parcelRepo, never()).save(any());
     }
 
     @Test
     @DisplayName("Rejeição: Estação inexistente lança DomainRuleException (STATION_NOT_FOUND)")
     void testCreateParcelStationNotFound() {
-        CreateParcelRequest request = new CreateParcelRequest(Dimension.S, "+351912345678", "client@ua.pt", "UNKNOWN-STATION");
+        CreateParcelRequest request = new CreateParcelRequest(Dimension.S, "+351912345678", "client@ua.pt",
+                "UNKNOWN-STATION");
 
         when(stationRepo.findByStationCode("UNKNOWN-STATION")).thenReturn(Optional.empty());
 
-        DomainRuleException ex = assertThrows(DomainRuleException.class, () ->
-                parcelService.createParcel(request)
-        );
+        DomainRuleException ex = assertThrows(DomainRuleException.class, () -> parcelService.createParcel(request));
 
         assertEquals("STATION_NOT_FOUND", ex.getErrorCode());
     }

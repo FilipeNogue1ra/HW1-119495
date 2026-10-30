@@ -2,14 +2,17 @@ package pt.ua.deti.tqs.tuttibox.infrastructure.adapters.in.web;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.deti.tqs.tuttibox.core.model.Compartment;
 import pt.ua.deti.tqs.tuttibox.core.model.CompartmentState;
 import pt.ua.deti.tqs.tuttibox.core.model.LockerStation;
+import pt.ua.deti.tqs.tuttibox.core.model.Parcel;
 import pt.ua.deti.tqs.tuttibox.core.ports.out.LockerHardwarePort;
 import pt.ua.deti.tqs.tuttibox.infrastructure.adapters.out.persistence.CompartmentRepository;
 import pt.ua.deti.tqs.tuttibox.infrastructure.adapters.out.persistence.LockerStationRepository;
+import pt.ua.deti.tqs.tuttibox.infrastructure.adapters.out.persistence.ParcelRepository;
 
 import java.util.*;
 
@@ -18,11 +21,16 @@ public class OperatorUiController {
 
     private final LockerStationRepository stationRepo;
     private final CompartmentRepository compartmentRepo;
+    private final ParcelRepository parcelRepo;
     private final LockerHardwarePort hardwarePort;
 
-    public OperatorUiController(LockerStationRepository stationRepo, CompartmentRepository compartmentRepo, LockerHardwarePort hardwarePort) {
+    public OperatorUiController(LockerStationRepository stationRepo, 
+                                CompartmentRepository compartmentRepo, 
+                                ParcelRepository parcelRepo,
+                                LockerHardwarePort hardwarePort) {
         this.stationRepo = stationRepo;
         this.compartmentRepo = compartmentRepo;
+        this.parcelRepo = parcelRepo;
         this.hardwarePort = hardwarePort;
     }
 
@@ -123,6 +131,67 @@ public class OperatorUiController {
 
         Map<String, Object> res = new HashMap<>();
         res.put("newState", comp.getState().name());
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/api/v1/operator/stations/{stationCode}/compartments/{compNumber}/free")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<Map<String, Object>> freeCompartment(@PathVariable String stationCode, @PathVariable String compNumber) {
+        Optional<LockerStation> optStation = stationRepo.findByStationCode(stationCode);
+        if (optStation.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Optional<Compartment> optComp = compartmentRepo.findByStationAndCompartmentNumber(optStation.get(), compNumber);
+        if (optComp.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Compartment comp = optComp.get();
+        // Remove any parcel assigned to this compartment
+        List<Parcel> parcels = parcelRepo.findAll();
+        for (Parcel p : parcels) {
+            if (p.getCompartment() != null && p.getCompartment().getId().equals(comp.getId())) {
+                parcelRepo.delete(p);
+            }
+        }
+
+        comp.setState(CompartmentState.FREE);
+        comp.setMaintenanceNote(null);
+        compartmentRepo.save(comp);
+        hardwarePort.closeDoor(stationCode, compNumber);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("newState", "FREE");
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/api/v1/operator/reset")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<Map<String, Object>> resetSystem() {
+        // 1. Remove all parcels
+        parcelRepo.deleteAll();
+
+        // 2. Reset lockers to default state
+        List<LockerStation> stations = stationRepo.findAll();
+        for (LockerStation st : stations) {
+            st.resetFailedPins();
+            stationRepo.save(st);
+
+            List<Compartment> comps = compartmentRepo.findByStation(st);
+            for (Compartment c : comps) {
+                c.setState(CompartmentState.FREE);
+                c.setMaintenanceNote(null);
+                compartmentRepo.save(c);
+                hardwarePort.closeDoor(st.getStationCode(), c.getCompartmentNumber());
+            }
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("message", "Sistema restaurado com sucesso para o estado padrão!");
         return ResponseEntity.ok(res);
     }
 }
