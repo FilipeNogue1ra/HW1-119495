@@ -123,7 +123,8 @@ TuttiBox provides a RESTful web API structured around resource-oriented endpoint
 All endpoints follow standard HTTP semantics:
 - `200 OK`: Successful read or state update operation.
 - `201 Created`: New resource successfully created (e.g., parcel registered and locker reserved).
-- `400 Bad Request`: Validation failure (e.g., malformed PIN or invalid dimension size) returning structured field errors.
+- `400 Bad Request`: Validation failure (e.g., malformed email or invalid dimension size) returning structured field errors.
+- `401 Unauthorized`: Invalid 6-digit pickup PIN entered at the locker terminal (`INVALID_PIN`).
 - `404 Not Found`: Target parcel, station, or compartment does not exist.
 - `409 Conflict`: Business rule violation (e.g., no locker available of the requested size, or parcel already collected).
 - `429 Too Many Requests`: Security threshold exceeded (terminal locked for 60 seconds after 3 failed PIN attempts).
@@ -138,6 +139,31 @@ TuttiBox implements an exhaustive testing pyramid structured across 10 distinct 
 
 * **Test Suite Metrics & Execution Status**:
   - **Total Automated Tests**: 70 tests executed with **0 failures and 0 errors (100% pass rate)**.
+  - **Pure Domain Unit Tests**: 23 tests (16 in `ParcelStateMachineServiceTest`, 7 in `StationRankingServiceTest`).
+  - **Test Doubles & Mocking**: 22 tests (`ParcelServiceTest`, `TerminalServiceTest`, `InMemoryHardwareFakeTest`).
+  - **Web Slice Tests (@WebMvcTest)**: 18 tests validating HTTP status codes and RFC 7807 ProblemDetail formats.
+  - **Database Concurrency Integration**: Multi-threaded suite in `PessimisticLockingPostgresTest` via Testcontainers (PostgreSQL 16).
+  - **BDD Acceptance Scenarios**: 3 Gherkin feature files (19 steps) driving `TerminalService`.
+  - **End-to-End Browser Automation**: Real Chromium browser automation via Microsoft Playwright for Java.
+  - **Non-Functional Performance**: Automated Grafana k6 suite evaluating nominal (20 VUs), spike (60 VUs), and brute-force workloads.
+  - **Security Rate-Limiting**: Multi-layered brute-force defense tested across all architectural layers.
+  - **Accessibility (WCAG 2.1 AA)**: Validated through high-contrast focus rings and full keyboard navigation.
+  - **Fault Injection & Resilience**: Hardware solenoid jamming simulated in memory with RFC 7807 error dispatching.
+
+---
+
+## 3.2 Traceability Matrix
+
+The following matrix maps each user-facing functional requirement and core use case (UC1 to UC6) to the automated test layers responsible for its verification:
+
+| Use Case / Requirement | Primary Actor | Verification Method | Automated Test Suite / Classes |
+| :--- | :--- | :--- | :--- |
+| **UC1: Find locker by address** | Recipient | Unit + Web Slice + E2E | `StationRankingServiceTest`, `StationControllerTest`, `TerminalPlaywrightTest` |
+| **UC2: Register parcel & allocate compartment** | Partner | Unit + Web Slice + Integration | `ParcelServiceTest`, `ParcelControllerTest`, `PessimisticLockingPostgresTest` |
+| **UC3: Courier drop-off & door sensor confirmation** | Courier | Unit + Web Slice + BDD + E2E | `TerminalServiceTest`, `TerminalControllerTest`, `parcel_pickup.feature`, `TerminalPlaywrightTest` |
+| **UC4: Customer pickup with 6-digit PIN** | Recipient | Unit + Web Slice + BDD + E2E | `TerminalServiceTest`, `TerminalControllerTest`, `parcel_pickup.feature`, `TerminalPlaywrightTest` |
+| **UC5: Parcel state history & tracking audit trail** | Partner, Recipient | Unit + Web Slice | `ParcelStateMachineServiceTest`, `ParcelControllerTest` |
+| **UC6: Station supervision & fault maintenance** | Operator | Web Slice + E2E Automation | `OperatorUiControllerTest`, `OperatorPlaywrightTest` |
   - **Test Breakdown across Categories**:
     1. *Pure Domain Unit Tests*: 23 tests (16 in `ParcelStateMachineServiceTest`, 7 in `StationRankingServiceTest` validating Haversine distance geometry).
     2. *Test Doubles & Mocking*: 22 tests (7 in `ParcelServiceTest`, 10 in `TerminalServiceTest` using Mockito, 5 in `InMemoryHardwareFakeTest` verifying cyber-physical actuators).
