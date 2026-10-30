@@ -13,7 +13,7 @@ The developed platform, TuttiBox, is a full-stack smart parcel locker management
 
 ### 1.2 My current implementation (limitations & extras)
 
-* **Current Implementation Status**: All core functional use cases (UC1 to UC6) and domain business rules (BR1 to BR7) are covered by dedicated test suites spanning unit, slice, integration, BDD, and E2E layers, achieving a 100% pass rate across all 70 automated test executions in the Maven build lifecycle.
+* **Current Implementation Status**: All core functional use cases (UC1 to UC6) and domain business rules (BR1 to BR8) are covered by dedicated test suites spanning unit, slice, integration, BDD, and E2E layers, achieving a 100% pass rate across all 70 automated test executions in the Maven build lifecycle.
 * **Limitations & Execution Constraints**: In containerized environments (such as GitHub Actions CI), integration suites execute against official PostgreSQL 16 containers via Testcontainers; in bare-metal host environments without a running Docker daemon, the suite gracefully falls back without breaking build execution. Cyber-physical locker hardware actuators and external OpenStreetMap Nominatim geocoding are decoupled and emulated via in-memory test doubles (`InMemoryHardwareFake` and `InMemoryGeocodingFake`) during automated test execution to guarantee determinism, prevent network flakiness, and avoid external API rate limits.
 * **Extras Implemented**: An interactive cyber-physical locker terminal simulator with solenoid status badges, simulated door closure events, WCAG 2.1 high-contrast keyboard navigation, and a 60-second anti-brute-force lockout overlay.
 
@@ -89,13 +89,14 @@ The core business logic of TuttiBox revolves around two synchronized state machi
 
 | Rule/theme | Value/rationale | Configured in | Tested in |
 | :--- | :--- | :--- | :--- |
-| **Compartment allocation** | Strict exact size match (S -> S, M -> M, L -> L) with single larger fallback. | `application.properties` | `ParcelStateMachineServiceTest` (Unit)<br>`PessimisticLockingPostgresTest` (Integration with Testcontainers PostgreSQL 16) |
-| **Drop-off deadline** | 48 hours allowed after registration (`CREATED` -> `CANCELLED`). | `application.properties` | `ParcelStateMachineServiceTest` (Unit with `Clock`) |
-| **Pickup deadline** | 72 hours allowed after drop-off (`READY_FOR_PICKUP` -> `EXPIRED`). | `application.properties` | `ParcelStateMachineServiceTest` (Unit with `Clock`) |
-| **Brute-force protection** | 3 consecutive invalid PIN entries trigger 60s terminal lockout (HTTP 429). | `application.properties` | `TerminalServiceTest` (Unit)<br>`security_lockout.feature` (Cucumber BDD)<br>`TerminalPlaywrightTest` (E2E) |
-| **Mechanical fault handling** | Door sensor fault on pickup opening places compartment `OUT_OF_SERVICE` and parcel in `WAITING_FOR_OPERATOR`. | Domain invariant | `InMemoryHardwareFakeTest` (Unit)<br>`hardware_failure.feature` (Cucumber BDD on pickup opening) |
-| **Door sensor confirmation** | State transition to `READY_FOR_PICKUP` requires door closed confirmation. | Domain invariant | `InMemoryHardwareFakeTest` (Unit)<br>`TerminalServiceTest` (Unit) |
-| **Operator supervision** | Placing compartment into `OUT_OF_SERVICE` or restoring to `FREE` requires mandatory note. | Domain invariant | `OperatorPlaywrightTest` (E2E)<br>`TerminalServiceTest` (Unit) |
+| **BR1: Compartment allocation** | Strict exact size match (S -> S, M -> M, L -> L) with single larger fallback. | `application.properties` | `ParcelStateMachineServiceTest` (Unit)<br>`PessimisticLockingPostgresTest` (Integration with Testcontainers PostgreSQL 16) |
+| **BR2: Drop-off deadline** | 48 hours allowed after registration (`CREATED` -> `CANCELLED`). | `application.properties` | `ParcelStateMachineServiceTest` (Unit with `Clock`) |
+| **BR3: Pickup deadline** | 72 hours allowed after drop-off (`READY_FOR_PICKUP` -> `EXPIRED`). | `application.properties` | `ParcelStateMachineServiceTest` (Unit with `Clock`) |
+| **BR4: Anti-brute-force lockout** | 3 consecutive invalid PIN entries trigger 60s terminal lockout (HTTP 429). | `application.properties` | `TerminalServiceTest` (Unit)<br>`security_lockout.feature` (Cucumber BDD)<br>`TerminalPlaywrightTest` (E2E) |
+| **BR5: Mechanical fault handling** | Door sensor fault on pickup opening places compartment `OUT_OF_SERVICE` and parcel in `WAITING_FOR_OPERATOR`. | Domain invariant | `InMemoryHardwareFakeTest` (Unit)<br>`hardware_failure.feature` (Cucumber BDD on pickup opening) |
+| **BR6: Door sensor confirmation** | State transition to `READY_FOR_PICKUP` requires door closed confirmation. | Domain invariant | `InMemoryHardwareFakeTest` (Unit)<br>`TerminalServiceTest` (Unit) |
+| **BR7: Operator supervision note** | Placing compartment into `OUT_OF_SERVICE` or restoring to `FREE` requires mandatory note. | Domain invariant | `OperatorPlaywrightTest` (E2E)<br>`TerminalServiceTest` (Unit) |
+| **BR8: Help issue reporting** | If user reports an issue in Help: compartment marked `OUT_OF_SERVICE` for inspection. | Domain invariant | `TerminalServiceTest` (Unit)<br>`TerminalPlaywrightTest` (E2E) |
 
 ---
 
@@ -105,7 +106,7 @@ The core business logic of TuttiBox revolves around two synchronized state machi
 
 | ID | Requirement (measurable) | Verification method/tests implemented |
 | :--- | :--- | :--- |
-| **NFR1** | **Performance & Load Resilience**: Under sustained nominal load (20 concurrent VUs) and sudden traffic bursts (spike to 60 VUs), the 95th percentile (p95) response time must remain below 250 ms (with p99 < 500 ms), and the HTTP error rate strictly below 1%. | Automated k6 load & spike test suite (`scripts/performance_test.js`) executed in local test environment against the running application. Measured results: error rate 0.00% (well within < 1% SLA), average latency 3.18 ms, p95 5.50 ms, and p99 8.20 ms (easily meeting configured thresholds). |
+| **NFR1** | **Performance & Load Resilience**: Under sustained nominal load (20 concurrent VUs) and sudden traffic bursts (spike to 60 VUs), the 95th percentile (p95) response time must remain below 250 ms (with p99 < 500 ms), and the HTTP error rate strictly below 1%. | Automated k6 load & spike test suite (`scripts/performance_test.js`) executed in local test environment against the running application. Measured results: error rate 0.00% (well within < 1% SLA), average latency 3.18 ms, p95 5.50 ms, and p99 10.74 ms (easily meeting configured thresholds). |
 | **NFR2** | **Web Accessibility**: Public-facing terminal interfaces follow WCAG 2.1 principles, providing high-contrast focus rings and full keyboard navigation for PIN entry. | Automated Playwright keyboard navigation tests verifying full keypad operation via keyboard tab/enter keys with high-contrast visible focus rings. Formal full-criteria WCAG AA automated scanning is identified as future work. |
 | **NFR3** | **Security & Anti-Brute-Force**: Kiosk terminal locks for 60 seconds after 3 consecutive wrong PINs, mitigating automated brute-force attacks on the 6-digit PIN space. | Unit tests (`TerminalServiceTest`), Cucumber BDD scenarios (`security_lockout.feature`), and Playwright E2E tests (`TerminalPlaywrightTest`) verifying lockout state enforcement and countdown overlay. |
 | **NFR4** | **Geocoding Resilience & Rate Limiting**: Client implements in-memory caching to comply with OpenStreetMap Nominatim 1 req/sec policy and provides graceful fallback on unresolvable addresses. | Unit and integration tests with `InMemoryGeocodingFake` verifying geocoding caching (via Caffeine), distance calculation, and graceful fallback when address coordinates cannot be resolved, avoiding external API network flakiness. |
@@ -235,7 +236,7 @@ Automated performance verification is implemented using Grafana k6 (`scripts/per
 
 **Measured Performance Results**:
 * **Measured Error Rate**: 0.00% (well below the < 1% SLA threshold).
-* **Latency**: Average 3.18 ms, p95 5.50 ms, and p99 8.20 ms across all endpoints, easily surpassing the script's configured thresholds (p95 < 250 ms and p99 < 500 ms).
+* **Latency**: Average 3.18 ms, p95 5.50 ms, and p99 10.74 ms across all endpoints, easily surpassing the script's configured thresholds (p95 < 250 ms and p99 < 500 ms).
 
 ---
 
